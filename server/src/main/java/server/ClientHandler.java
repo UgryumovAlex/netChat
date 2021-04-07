@@ -62,7 +62,7 @@ public class ClientHandler {
                         // -> nickname сообщение (Стрелочка ник пробел сообщение)
                         if (str.startsWith("->")) {
                             String[] token = str.split("\\s+", 2);
-                            server.privateMsg(this, token[1].replace("->", ""), token[2]);
+                            server.privateMsg(this, token[0].replaceFirst("->", ""), token[1]);
                         } else {
                             server.broadcastMsg(this, str);
                         }
