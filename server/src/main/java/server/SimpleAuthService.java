@@ -25,6 +25,8 @@ public class SimpleAuthService implements AuthService{
         users.add(new UserData("lesha", "devastator", "Папа"));
         users.add(new UserData("natasha", "boss", "Мама"));
         users.add(new UserData("dima", "tractor", "Димон"));
+        users.add(new UserData("ded", "biathlon", "Дед"));
+
     }
 
     @Override
