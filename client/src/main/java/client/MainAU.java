@@ -10,7 +10,7 @@ public class MainAU extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception{
-        Parent root = FXMLLoader.load(getClass().getResource("/chatform.fxml"));
+        Parent root = FXMLLoader.load(getClass().getResource("/fxml/chatform.fxml"));
         primaryStage.setTitle("net Chat");
         primaryStage.setScene(new Scene(root, 400, 600));
         primaryStage.show();
