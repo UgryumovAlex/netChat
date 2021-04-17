@@ -79,6 +79,7 @@ public class ClientHandler {
                                 sendMsg("/reg_no");
                             }
                         }
+
                     }
 
                     //цикл работы
@@ -88,6 +89,23 @@ public class ClientHandler {
                         if (str.equals("/end")) {
                             out.writeUTF("/end");
                             break;
+                        }
+
+                        //Смена Nickname
+                        if (str.startsWith("/newNick")) {
+                            String[] token = str.split("\\s");
+                            if (nickname.equals(token[1])) {
+                                sendMsg("nick " + token[1] + " уже используется");
+                            } else {
+                                if (server.getAuthService().setNewNickname(token[1], nickname)) {
+                                    nickname = token[1];
+                                    sendMsg("/newNick_ok " + nickname + " Успешно, новый nick ");
+                                    server.broadcastClientList(); //Обновим список клиентов
+                                } else {
+                                    sendMsg("Ошибка, nick не был изменён");
+                                }
+                            }
+                            continue;
                         }
 
                         //Для обращения к конкретному пользователю используем формат :
