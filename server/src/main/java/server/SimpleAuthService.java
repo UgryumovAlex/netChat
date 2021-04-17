@@ -25,6 +25,8 @@ public class SimpleAuthService implements AuthService{
         users.add(new UserData("lesha", "devastator", "Папа"));
         users.add(new UserData("natasha", "boss", "Мама"));
         users.add(new UserData("dima", "tractor", "Димон"));
+        users.add(new UserData("ded", "biathlon", "Дед"));
+
     }
 
     @Override
@@ -47,5 +49,10 @@ public class SimpleAuthService implements AuthService{
         }
         users.add(new SimpleAuthService.UserData(login, password, nickname));
         return true;
+    }
+
+    @Override
+    public boolean setNewNickname(String newNickName, String oldNickName) {
+        return false;
     }
 }

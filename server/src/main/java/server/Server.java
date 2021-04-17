@@ -16,7 +16,7 @@ public class Server {
 
     public Server() {
         clients = new CopyOnWriteArrayList<>();
-        authService = new SimpleAuthService();
+        authService = new DatabaseAuthService(); //SimpleAuthService(); //15.04.2021 - поменял авторизацию на БД
 
         try {
             server = new ServerSocket(PORT);

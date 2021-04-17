@@ -111,7 +111,6 @@ public class ControllerAU implements Initializable {
                             if (str.startsWith("/reg_no")) {
                                 regController.showResult("/reg_no");
                             }
-
                         } else {
                             chatArea.appendText(str + "\n");
                         }
@@ -134,6 +133,14 @@ public class ControllerAU implements Initializable {
                                         userList.getItems().add(token[i]);
                                     }
                                 });
+                            }
+
+                            // Поменяем nick
+                            if (str.startsWith("/newNick_ok")) {
+                                String[] token = str.split("\\s+", 3);
+                                nickname = token[1];
+                                setTitle(nickname);
+                                chatArea.appendText(token[2] + nickname + "\n");
                             }
                         } else {
                             chatArea.appendText(str + "\n");
@@ -184,12 +191,12 @@ public class ControllerAU implements Initializable {
         }
     }
 
-    private void setTitle(String nickname) {
+    private void setTitle(String title) {
         Platform.runLater(() -> {
-            if (nickname.equals("")) {
+            if (title.equals("")) {
                 stage.setTitle("net chat");
             } else {
-                stage.setTitle(String.format("net chat: [ %s ]", nickname));
+                stage.setTitle(String.format("net chat: [ %s ]", title));
             }
         });
     }
