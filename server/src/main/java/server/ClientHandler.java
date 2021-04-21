@@ -49,7 +49,7 @@ public class ClientHandler {
                                 login = token[1];
                                 if (!server.isLoginAuthenticated(login)) {
                                     nickname = newNick;
-                                    sendMsg("/auth_ok " + nickname);
+                                    sendMsg("/auth_ok " + nickname + " " + login);
                                     server.subscribe(this);
                                     System.out.println("Client authenticated. nick: " + nickname +
                                             " Address: " + socket.getRemoteSocketAddress());

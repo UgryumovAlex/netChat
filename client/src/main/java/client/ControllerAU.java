@@ -19,7 +19,11 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.List;
 import java.util.ResourceBundle;
+
+import java.util.Date;
 
 public class ControllerAU implements Initializable {
     @FXML
@@ -46,10 +50,12 @@ public class ControllerAU implements Initializable {
 
     private boolean authenticated;
     private String nickname;
+    private String login;
     private Stage stage;
     private Stage regStage;
     private RegController regController;
 
+    private ClientLogging logger;
 
     public void setAuthenticated(boolean authenticated) {
         this.authenticated = authenticated;
@@ -62,6 +68,7 @@ public class ControllerAU implements Initializable {
 
         if (!authenticated) {
             nickname = "";
+            login = "";
         }
         setTitle(nickname);
         chatArea.clear();
@@ -101,7 +108,9 @@ public class ControllerAU implements Initializable {
                                 break;
                             }
                             if (str.startsWith("/auth_ok")) {
-                                nickname = str.split("\\s+")[1];
+                                String[] token = str.split("\\s+");
+                                nickname = token[1];
+                                login = token[2];
                                 setAuthenticated(true);
                                 break;
                             }
@@ -113,6 +122,14 @@ public class ControllerAU implements Initializable {
                             }
                         } else {
                             chatArea.appendText(str + "\n");
+                        }
+                    }
+
+                    if (authenticated) { //Если авторизовались, то включаем логгер
+                        logger = new ClientLogging(login);
+
+                        for ( String historyMsg: logger.getPrevLogData() ) {
+                            Platform.runLater(() -> {chatArea.appendText(historyMsg+"\n");});
                         }
                     }
 
@@ -140,10 +157,14 @@ public class ControllerAU implements Initializable {
                                 String[] token = str.split("\\s+", 3);
                                 nickname = token[1];
                                 setTitle(nickname);
-                                chatArea.appendText(token[2] + nickname + "\n");
+
+                                String newNickStr = token[2] + nickname + "\n";
+                                chatArea.appendText(newNickStr);
+                                logger.LogMessage(newNickStr);
                             }
                         } else {
                             chatArea.appendText(str + "\n");
+                            logger.LogMessage(str + "\n");
                         }
                     }
                 } catch (IOException e) {
@@ -153,6 +174,7 @@ public class ControllerAU implements Initializable {
                     setAuthenticated(false);
                     try {
                         socket.close();
+                        logger.LoggingClose();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -191,6 +213,7 @@ public class ControllerAU implements Initializable {
         }
     }
 
+    @FXML
     private void setTitle(String title) {
         Platform.runLater(() -> {
             if (title.equals("")) {
@@ -206,7 +229,6 @@ public class ControllerAU implements Initializable {
         String receiver = userList.getSelectionModel().getSelectedItem();
         textSend.setText("->" + receiver + " ");
     }
-
 
     private void createRegWindow() {
         try {
