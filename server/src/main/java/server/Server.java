@@ -5,6 +5,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Server {
     private static ServerSocket server;
@@ -14,9 +16,12 @@ public class Server {
     private List<ClientHandler> clients;
     private AuthService authService;
 
+    private ExecutorService service;
+
     public Server() {
         clients = new CopyOnWriteArrayList<>();
         authService = new DatabaseAuthService(); //SimpleAuthService(); //15.04.2021 - поменял авторизацию на БД
+        service = Executors.newCachedThreadPool();
 
         try {
             server = new ServerSocket(PORT);
@@ -32,6 +37,7 @@ public class Server {
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
+            service.shutdown();
             try {
                 socket.close();
             } catch (IOException e) {
@@ -102,5 +108,9 @@ public class Server {
         }
 
         return false;
+    }
+
+    public ExecutorService getService() {
+        return service;
     }
 }
