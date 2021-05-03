@@ -5,6 +5,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 public class ClientHandler {
     private Server server;
@@ -15,8 +17,12 @@ public class ClientHandler {
     private String nickname;
     private String login;
 
+    private static final Logger logger = Logger.getLogger(server.ClientHandler.class.getName());
+
     public ClientHandler(Server server, Socket socket) {
         try {
+            LogManager.getLogManager().addLogger(logger);
+
             this.server = server;
             this.socket = socket;
             in = new DataInputStream(socket.getInputStream());
@@ -50,9 +56,6 @@ public class ClientHandler {
                                         nickname = newNick;
                                         sendMsg("/auth_ok " + nickname + " " + login);
                                         server.subscribe(this);
-                                        System.out.println("Client authenticated. nick: " + nickname +
-                                                " Address: " + socket.getRemoteSocketAddress());
-
                                         socket.setSoTimeout(0);
 
                                         break;
@@ -96,6 +99,8 @@ public class ClientHandler {
                                     sendMsg("nick " + token[1] + " уже используется");
                                 } else {
                                     if (server.getAuthService().setNewNickname(token[1], nickname)) {
+                                        logger.info(nickname + " сменил nick на " + token[1]);
+
                                         nickname = token[1];
                                         sendMsg("/newNick_ok " + nickname + " Успешно, новый nick ");
                                         server.broadcastClientList(); //Обновим список клиентов
@@ -115,7 +120,6 @@ public class ClientHandler {
                                 server.broadcastMsg(this, str);
                             }
                         }
-
                  } catch(SocketTimeoutException e) {
                      try {
                         out.writeUTF("/end"); //Клиент слишком долго молчал, отключаем его
@@ -124,9 +128,9 @@ public class ClientHandler {
                      }
                  } catch (IOException e) {
                      e.printStackTrace();
+                     logger.warning(nickname + " IOException : " + e);
                  } finally {
                     server.unsubscribe(this);
-                    System.out.println("client disconnect " + socket.getRemoteSocketAddress());
                     try {
                         socket.close();
                     } catch (IOException e) {
@@ -154,5 +158,9 @@ public class ClientHandler {
 
     public String getLogin() {
         return login;
+    }
+
+    public String getClientAddress() {
+        return socket.getRemoteSocketAddress().toString();
     }
 }
