@@ -5,6 +5,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 public class ClientHandler {
     private Server server;
@@ -15,127 +17,127 @@ public class ClientHandler {
     private String nickname;
     private String login;
 
+    private static final Logger logger = Logger.getLogger(server.ClientHandler.class.getName());
+
     public ClientHandler(Server server, Socket socket) {
         try {
+            LogManager.getLogManager().addLogger(logger);
+
             this.server = server;
             this.socket = socket;
             in = new DataInputStream(socket.getInputStream());
             out = new DataOutputStream(socket.getOutputStream());
 
-            new Thread(() -> {
-                try {
+            server.getService().execute(
+             new Thread(() -> {
+                 try {
+                        socket.setSoTimeout(120000);
+                        // цикл аутентификации
+                        while (true) {
+                            String str = in.readUTF();
 
-                    socket.setSoTimeout(120000);
-
-                    // цикл аутентификации
-                    while (true) {
-                        String str = in.readUTF();
-
-                        if (str.equals("/end")) {
-                            out.writeUTF("/end");
-                            throw new RuntimeException("Клиент решил отключиться");
-                        }
-
-                        // Аутентификация
-                        if (str.startsWith("/auth")) {
-                            String[] token = str.split("\\s+", 3);
-                            if (token.length < 3) {
-                                continue;
+                            if (str.equals("/end")) {
+                                out.writeUTF("/end");
+                                throw new RuntimeException("Клиент решил отключиться");
                             }
-                            String newNick = server
-                                    .getAuthService()
-                                    .getNicknameByLoginAndPassword(token[1], token[2]);
-                            if (newNick != null) {
-                                login = token[1];
-                                if (!server.isLoginAuthenticated(login)) {
-                                    nickname = newNick;
-                                    sendMsg("/auth_ok " + nickname);
-                                    server.subscribe(this);
-                                    System.out.println("Client authenticated. nick: " + nickname +
-                                            " Address: " + socket.getRemoteSocketAddress());
 
-                                    socket.setSoTimeout(0);
-
-                                    break;
-                                } else {
-                                    sendMsg("С этим логином уже авторизовались");
+                            // Аутентификация
+                            if (str.startsWith("/auth")) {
+                                String[] token = str.split("\\s+", 3);
+                                if (token.length < 3) {
+                                    continue;
                                 }
-                            } else {
-                                sendMsg("Неверный логин / пароль");
-                            }
-                        }
+                                String newNick = server
+                                        .getAuthService()
+                                        .getNicknameByLoginAndPassword(token[1], token[2]);
+                                if (newNick != null) {
+                                    login = token[1];
+                                    if (!server.isLoginAuthenticated(login)) {
+                                        nickname = newNick;
+                                        sendMsg("/auth_ok " + nickname + " " + login);
+                                        server.subscribe(this);
+                                        socket.setSoTimeout(0);
 
-                        // Регистрация
-                        if (str.startsWith("/reg")) {
-                            String[] token = str.split("\\s+", 4);
-                            if (token.length < 4) {
-                                continue;
-                            }
-                            boolean b = server.getAuthService()
-                                    .registration(token[1], token[2], token[3]);
-                            if (b) {
-                                sendMsg("/reg_ok");
-                            } else {
-                                sendMsg("/reg_no");
-                            }
-                        }
-
-                    }
-
-                    //цикл работы
-                    while (true) {
-                        String str = in.readUTF();
-
-                        if (str.equals("/end")) {
-                            out.writeUTF("/end");
-                            break;
-                        }
-
-                        //Смена Nickname
-                        if (str.startsWith("/newNick")) {
-                            String[] token = str.split("\\s");
-                            if (nickname.equals(token[1])) {
-                                sendMsg("nick " + token[1] + " уже используется");
-                            } else {
-                                if (server.getAuthService().setNewNickname(token[1], nickname)) {
-                                    nickname = token[1];
-                                    sendMsg("/newNick_ok " + nickname + " Успешно, новый nick ");
-                                    server.broadcastClientList(); //Обновим список клиентов
+                                        break;
+                                    } else {
+                                        sendMsg("С этим логином уже авторизовались");
+                                    }
                                 } else {
-                                    sendMsg("Ошибка, nick не был изменён");
+                                    sendMsg("Неверный логин / пароль");
                                 }
                             }
-                            continue;
+
+                            // Регистрация
+                            if (str.startsWith("/reg")) {
+                                String[] token = str.split("\\s+", 4);
+                                if (token.length < 4) {
+                                    continue;
+                                }
+                                boolean b = server.getAuthService()
+                                        .registration(token[1], token[2], token[3]);
+                                if (b) {
+                                    sendMsg("/reg_ok");
+                                } else {
+                                    sendMsg("/reg_no");
+                                }
+                            }
                         }
 
-                        //Для обращения к конкретному пользователю используем формат :
-                        // -> nickname сообщение (Стрелочка ник пробел сообщение)
-                        if (str.startsWith("->")) {
-                            String[] token = str.split("\\s+", 2);
-                            server.privateMsg(this, token[0].replaceFirst("->", ""), token[1]);
-                        } else {
-                            server.broadcastMsg(this, str);
-                        }
-                    }
+                        //цикл работы
+                        while (true) {
+                            String str = in.readUTF();
 
-                } catch(SocketTimeoutException e) {
-                    try {
+                            if (str.equals("/end")) {
+                                out.writeUTF("/end");
+                                break;
+                            }
+
+                            //Смена Nickname
+                            if (str.startsWith("/newNick")) {
+                                String[] token = str.split("\\s");
+                                if (nickname.equals(token[1])) {
+                                    sendMsg("nick " + token[1] + " уже используется");
+                                } else {
+                                    if (server.getAuthService().setNewNickname(token[1], nickname)) {
+                                        logger.info(nickname + " сменил nick на " + token[1]);
+
+                                        nickname = token[1];
+                                        sendMsg("/newNick_ok " + nickname + " Успешно, новый nick ");
+                                        server.broadcastClientList(); //Обновим список клиентов
+                                    } else {
+                                        sendMsg("Ошибка, nick не был изменён");
+                                    }
+                                }
+                                continue;
+                            }
+
+                            //Для обращения к конкретному пользователю используем формат :
+                            // -> nickname сообщение (Стрелочка ник пробел сообщение)
+                            if (str.startsWith("->")) {
+                                String[] token = str.split("\\s+", 2);
+                                server.privateMsg(this, token[0].replaceFirst("->", ""), token[1]);
+                            } else {
+                                server.broadcastMsg(this, str);
+                            }
+                        }
+                 } catch(SocketTimeoutException e) {
+                     try {
                         out.writeUTF("/end"); //Клиент слишком долго молчал, отключаем его
-                    } catch (IOException ioException) {
+                     } catch (IOException ioException) {
                         ioException.printStackTrace();
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } finally {
+                     }
+                 } catch (IOException e) {
+                     e.printStackTrace();
+                     logger.warning(nickname + " IOException : " + e);
+                 } finally {
                     server.unsubscribe(this);
-                    System.out.println("client disconnect " + socket.getRemoteSocketAddress());
                     try {
                         socket.close();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                }
-            }).start();
+                 }
+            }));
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -156,5 +158,9 @@ public class ClientHandler {
 
     public String getLogin() {
         return login;
+    }
+
+    public String getClientAddress() {
+        return socket.getRemoteSocketAddress().toString();
     }
 }

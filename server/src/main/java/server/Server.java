@@ -5,6 +5,10 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 public class Server {
     private static ServerSocket server;
@@ -14,24 +18,34 @@ public class Server {
     private List<ClientHandler> clients;
     private AuthService authService;
 
+    private ExecutorService service;
+
+    private static final Logger logger = Logger.getLogger(server.Server.class.getName());
+
     public Server() {
         clients = new CopyOnWriteArrayList<>();
         authService = new DatabaseAuthService(); //SimpleAuthService(); //15.04.2021 - поменял авторизацию на БД
+        service = Executors.newCachedThreadPool();
+
+        LogManager.getLogManager().addLogger(logger);
 
         try {
             server = new ServerSocket(PORT);
-            System.out.println("Server started");
+            //System.out.println("Server started");
+            logger.info("Server started");
 
             while(true){
                 socket = server.accept();
-                System.out.println(socket.getLocalSocketAddress());
-                System.out.println("Client connect: "+ socket.getRemoteSocketAddress());
+                //System.out.println(socket.getLocalSocketAddress());
+                //System.out.println("Client connect: "+ socket.getRemoteSocketAddress());
                 new ClientHandler(this, socket);
             }
-
         } catch (IOException e) {
             e.printStackTrace();
+            logger.warning("Server IOException " + e);
+
         } finally {
+            service.shutdown();
             try {
                 socket.close();
             } catch (IOException e) {
@@ -39,6 +53,7 @@ public class Server {
             }
             try {
                 server.close();
+                logger.info("Server closed");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -50,6 +65,7 @@ public class Server {
         for (ClientHandler c : clients) {
             c.sendMsg(message);
         }
+        logger.fine(sender.getNickname() + " послал сообщение всем");
     }
 
     public void privateMsg(ClientHandler sender, String reciever, String msg) {
@@ -61,6 +77,7 @@ public class Server {
         for (ClientHandler c : clients) {
             if (c.getNickname().equalsIgnoreCase(reciever)) {
                 c.sendMsg(message);
+                logger.fine(sender.getNickname() + " послал сообщение " + c.getNickname());
                 return;
             }
         }
@@ -69,11 +86,14 @@ public class Server {
 
     public void subscribe(ClientHandler clientHandler){
         clients.add(clientHandler);
+        logger.info(clientHandler.getNickname() + " подключился, " + clientHandler.getClientAddress());
         broadcastClientList();
     }
 
     public void unsubscribe(ClientHandler clientHandler){
         clients.remove(clientHandler);
+        logger.info(clientHandler.getNickname() + " отключился, " + clientHandler.getClientAddress());
+
         broadcastClientList();
     }
 
@@ -102,5 +122,9 @@ public class Server {
         }
 
         return false;
+    }
+
+    public ExecutorService getService() {
+        return service;
     }
 }
