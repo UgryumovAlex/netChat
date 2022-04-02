@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 
-public class ClientHandler {
+public class ClientHandler implements IClientHandler{
     private Server server;
     private Socket socket;
     private DataInputStream in;
