@@ -52,7 +52,7 @@ public class SimpleAuthService implements AuthService{
     }
 
     @Override
-    public boolean setNewNickname(String newNickName, String oldNickName) {
+    public boolean setNewNickname(String newNickName, String oldNickName, String login) {
         //оставим заглушку, не реализуем
         return false;
     }

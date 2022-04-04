@@ -95,7 +95,7 @@ public class ClientHandler {
                                 if (nickname.equals(token[1])) {
                                     sendMsg("nick " + token[1] + " уже используется");
                                 } else {
-                                    if (server.getAuthService().setNewNickname(token[1], nickname)) {
+                                    if (server.getAuthService().setNewNickname(token[1], nickname, login )) {
                                         nickname = token[1];
                                         sendMsg("/newNick_ok " + nickname + " Успешно, новый nick ");
                                         server.broadcastClientList(); //Обновим список клиентов
