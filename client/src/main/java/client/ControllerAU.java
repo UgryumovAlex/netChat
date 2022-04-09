@@ -1,7 +1,5 @@
 package client;
 
-import client.listener.Event;
-import client.listener.EventPool;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -21,7 +19,11 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.List;
 import java.util.ResourceBundle;
+
+import java.util.Date;
 
 public class ControllerAU implements Initializable {
     @FXML
@@ -54,7 +56,6 @@ public class ControllerAU implements Initializable {
     private RegController regController;
 
     private ClientLogging logger;
-    private EventPool     eventPool;
 
     public void setAuthenticated(boolean authenticated) {
         this.authenticated = authenticated;
@@ -124,11 +125,8 @@ public class ControllerAU implements Initializable {
                         }
                     }
 
-                    if (authenticated) { //Если авторизовались
-                        logger = new ClientLogging(login); //отдельно логгер нужен для получения последних сообщений из истории
-                        eventPool = new EventPool();
-                        eventPool.registerListener(logger);
-                        eventPool.start();
+                    if (authenticated) { //Если авторизовались, то включаем логгер
+                        logger = new ClientLogging(login);
 
                         for ( String historyMsg: logger.getPrevLogData() ) {
                             Platform.runLater(() -> {chatArea.appendText(historyMsg+"\n");});
@@ -162,15 +160,11 @@ public class ControllerAU implements Initializable {
 
                                 String newNickStr = token[2] + nickname + "\n";
                                 chatArea.appendText(newNickStr);
-                                //logger.logMessage(newNickStr);
-                                Event event = new Event(newNickStr);
-                                eventPool.publishEvent(event);
+                                logger.LogMessage(newNickStr);
                             }
                         } else {
                             chatArea.appendText(str + "\n");
-                            //logger.logMessage(str + "\n");
-                            Event event = new Event(str + "\n");
-                            eventPool.publishEvent(event);
+                            logger.LogMessage(str + "\n");
                         }
                     }
                 } catch (IOException e) {
@@ -180,7 +174,7 @@ public class ControllerAU implements Initializable {
                     setAuthenticated(false);
                     try {
                         socket.close();
-                        logger.loggingClose();
+                        logger.LoggingClose();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }

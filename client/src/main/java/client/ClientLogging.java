@@ -1,8 +1,5 @@
 package client;
 
-import client.listener.Event;
-import client.listener.Listener;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -11,7 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 
-public class ClientLogging implements Listener {
+public class ClientLogging {
     private String clientLogin;
     private File logFile;
     private FileWriter writer;
@@ -26,11 +23,11 @@ public class ClientLogging implements Listener {
         writer = new FileWriter(logFile, true);
     }
 
-    public void loggingClose() throws IOException {
+    public void LoggingClose() throws IOException {
         writer.close();
     }
 
-    private void logMessage(String msg) throws IOException {
+    public void LogMessage(String msg) throws IOException {
         writer.write(msg);
     }
 
@@ -40,15 +37,6 @@ public class ClientLogging implements Listener {
             return lines;
         } else {
             return lines.subList(lines.size()-HISTORY_DEPTH, lines.size());
-        }
-    }
-
-    @Override
-    public void onEventReceived(Event event) {
-        try {
-            logMessage(event.getData());
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 }
