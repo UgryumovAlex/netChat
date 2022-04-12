@@ -20,7 +20,9 @@ public class Server {
 
     public Server() {
         clients = new CopyOnWriteArrayList<>();
-        authService = new DatabaseAuthService(); //SimpleAuthService(); //15.04.2021 - поменял авторизацию на БД
+        //authService = new DatabaseAuthService(); //SimpleAuthService(); //15.04.2021 - поменял авторизацию на БД
+        authService = new DatabaseAuthServiceProxy(); //Реализован шаблон проектирования Proxy
+
         service = Executors.newCachedThreadPool();
 
         try {
