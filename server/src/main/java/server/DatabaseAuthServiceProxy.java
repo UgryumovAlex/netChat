@@ -6,35 +6,40 @@ import java.util.Map;
 public class DatabaseAuthServiceProxy implements AuthService{
 
     private final DatabaseAuthService databaseAuthService = new DatabaseAuthService();
-    private final Map<String, String> loginsStorage = new HashMap<>();
+    private final Map<UserLoginData, String> loginsStorage = new HashMap<>();
 
 
     @Override
     public String getNicknameByLoginAndPassword(String login, String password) {
-        if (loginsStorage.containsKey(login)) {
-            return loginsStorage.get(login);
+        UserLoginData userLoginData = new UserLoginData(login, password);
+
+        if (loginsStorage.containsKey(userLoginData)) {
+            return loginsStorage.get(userLoginData);
         } else {
             String nickName = databaseAuthService.getNicknameByLoginAndPassword(login, password);
-            loginsStorage.put(login, nickName);
+            loginsStorage.put(userLoginData, nickName);
             return nickName;
         }
     }
 
     @Override
     public boolean registration(String login, String password, String nickname) {
-        if (!loginsStorage.containsKey(login)) {
+
+        UserLoginData userLoginData = new UserLoginData(login, password);
+
+        if (!loginsStorage.containsKey(userLoginData)) {
             return databaseAuthService.registration(login, password, nickname);
         }
         return false;
     }
 
     @Override
-    public boolean setNewNickname(String newNickName, String oldNickName, String login) {
-        if (loginsStorage.containsKey(login)) {
-            loginsStorage.put(login, newNickName);
+    public boolean setNewNickname(String newNickName, String oldNickName, UserLoginData userLoginData) {
+        if (loginsStorage.containsKey(userLoginData)) {
+            loginsStorage.put(userLoginData, newNickName);
             return true;
         } else {
-            return databaseAuthService.setNewNickname(newNickName, oldNickName, login);
+            return databaseAuthService.setNewNickname(newNickName, oldNickName, userLoginData);
         }
     }
 }

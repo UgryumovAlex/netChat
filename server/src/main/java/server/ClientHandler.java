@@ -13,7 +13,8 @@ public class ClientHandler implements IClientHandler{
     private DataOutputStream out;
 
     private String nickname;
-    private String login;
+    private UserLoginData userLoginData;
+    private String authLogin;
 
     public ClientHandler(Server server, Socket socket) {
         try {
@@ -41,14 +42,20 @@ public class ClientHandler implements IClientHandler{
                                 if (token.length < 3) {
                                     continue;
                                 }
+
+                                authLogin = token[1];
+
                                 String newNick = server
                                         .getAuthService()
-                                        .getNicknameByLoginAndPassword(token[1], token[2]);
+                                        .getNicknameByLoginAndPassword(authLogin, token[2]);
                                 if (newNick != null) {
-                                    login = token[1];
-                                    if (!server.isLoginAuthenticated(login)) {
+                                    if (!server.isLoginAuthenticated(authLogin)) {
+
+                                        userLoginData.setLogin(authLogin);
+                                        userLoginData.setPassword(token[2]);
+
                                         nickname = newNick;
-                                        sendMsg("/auth_ok " + nickname + " " + login);
+                                        sendMsg("/auth_ok " + nickname + " " + userLoginData.getLogin());
                                         server.subscribe(this);
                                         System.out.println("Client authenticated. nick: " + nickname +
                                                 " Address: " + socket.getRemoteSocketAddress());
@@ -95,7 +102,7 @@ public class ClientHandler implements IClientHandler{
                                 if (nickname.equals(token[1])) {
                                     sendMsg("nick " + token[1] + " уже используется");
                                 } else {
-                                    if (server.getAuthService().setNewNickname(token[1], nickname, login )) {
+                                    if (server.getAuthService().setNewNickname(token[1], nickname, userLoginData )) {
                                         nickname = token[1];
                                         sendMsg("/newNick_ok " + nickname + " Успешно, новый nick ");
                                         server.broadcastClientList(); //Обновим список клиентов
@@ -153,6 +160,6 @@ public class ClientHandler implements IClientHandler{
     }
 
     public String getLogin() {
-        return login;
+        return userLoginData.getLogin();
     }
 }

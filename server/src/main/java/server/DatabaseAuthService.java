@@ -82,7 +82,7 @@ public class DatabaseAuthService implements AuthService {
         return false;
     }
 
-    public boolean setNewNickname(String newNickName, String oldNickName, String login) {
+    public boolean setNewNickname(String newNickName, String oldNickName, UserLoginData userLoginData) {
         try {
             connect();
             if (!connection.isClosed()) {

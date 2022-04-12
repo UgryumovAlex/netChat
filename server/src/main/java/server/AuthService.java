@@ -18,5 +18,5 @@ public interface AuthService {
      * Метод для смены Nickname пользователя
      *
      * */
-    public boolean setNewNickname(String newNickName, String oldNickName, String login);
+    public boolean setNewNickname(String newNickName, String oldNickName, UserLoginData userLoginData);
 }
